@@ -1,10 +1,8 @@
 package com.cput.mediqueuesystem.service;
 
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.cput.mediqueuesystem.domain.Department;
 import com.cput.mediqueuesystem.repository.DepartmentRepository;
 
@@ -14,10 +12,8 @@ DepartmentService
 Author: Charmaine Dlamini
 Date: 05 August 2026
  */
-
 @Service
 public class DepartmentService implements IDepartmentService {
-
     private final DepartmentRepository repository;
 
     @Autowired

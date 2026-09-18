@@ -1,58 +1,50 @@
 package com.cput.mediqueuesystem.service;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.cput.mediqueuesystem.domain.Role;
 import com.cput.mediqueuesystem.repository.RoleRepository;
-
-/*
-RoleService.java
-RoleService
-Author: Charmaine Dlamini
-Date: 05 August 2026
- */
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import java.util.List;
+import java.util.Optional;
 
 @Service
-public class RoleService implements IRoleService {
-
-    private final RoleRepository repository;
+public class RoleService {
 
     @Autowired
-    RoleService(RoleRepository repository) {
-        this.repository = repository;
+    private RoleRepository roleRepository;
+
+    public List<Role> getAllRoles() {
+        return roleRepository.findAll();
     }
 
-    // Saves a new role to the database
-    @Override
-    public Role create(Role role) {
-        return this.repository.save(role);
+    public Role getRoleById(Long id) {
+        Optional<Role> role = roleRepository.findById(id);
+        return role.orElse(null);
     }
 
-    // Finds a role by its role ID
-    @Override
-    public Role read(String roleId) {
-        return this.repository.findById(roleId).orElse(null);
+    public Role getRoleByName(String roleName) {
+        return roleRepository.findByRoleName(roleName).orElse(null);
     }
 
-    // Updates an existing role in the database
-    @Override
-    public Role update(Role role) {
-        return this.repository.save(role);
+    public Role createRole(Role role) {
+        return roleRepository.save(role);
     }
 
-    // Deletes a role by its role ID
-    @Override
-    public boolean delete(String roleId) {
-        this.repository.deleteById(roleId);
-        return true;
+    public Role updateRole(Long id, Role role) {
+        Role existing = getRoleById(id);
+        if (existing != null) {
+            existing.setRoleName(role.getRoleName());
+            existing.setDescription(role.getDescription());
+            return roleRepository.save(existing);
+        }
+        return null;
     }
 
-    // Returns a list of all roles
-    @Override
-    public List<Role> getAll() {
-        return this.repository.findAll();
+    public void deleteRole(Long id) {
+        roleRepository.deleteById(id);
+    }
+
+    public boolean roleExists(Long id) {
+        return roleRepository.existsById(id);
     }
 }

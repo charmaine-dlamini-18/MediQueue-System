@@ -3,59 +3,47 @@ package com.cput.mediqueuesystem.domain;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
-/*
- * Role.java
- * Role entity used to assign permissions and access levels to users.
- *
- * Author: Charmaine Dlamini
- * Date: 29 July 2026
- */
-
 @Entity
-@Table(name = "role")
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
+@Table(name = "roles")
 public class Role {
 
-    // Primary Key
     @Id
-    @JsonProperty("roleId")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "role_id")
-    private String roleId;
+    private Long roleId;
 
-    // Role name (Patient, Doctor, Nurse, Receptionist, Admin)
     @Column(name = "role_name", nullable = false, unique = true)
     private String roleName;
 
-    // One role can belong to many users
+    @Column(name = "description")
+    private String description;
+
+    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnore
-    @OneToMany(mappedBy = "role", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<User> users = new ArrayList<>();
 
-    // Default constructor required by JPA
-    protected Role() {
+    public Role() {
     }
 
-    // Constructor used by Builder
     private Role(Builder builder) {
         this.roleId = builder.roleId;
         this.roleName = builder.roleName;
+        this.description = builder.description;
         this.users = builder.users;
     }
 
-    // Getters
-
-    public String getRoleId() {
+    public Long getRoleId() {
         return roleId;
     }
 
@@ -63,35 +51,50 @@ public class Role {
         return roleName;
     }
 
+    public String getDescription() {
+        return description;
+    }
+
     public List<User> getUsers() {
         return users;
     }
 
-    // Returns the Role object as a String
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
     @Override
     public String toString() {
         return "Role{" +
-                "roleId='" + roleId + '\'' +
+                "roleId=" + roleId +
                 ", roleName='" + roleName + '\'' +
+                ", description='" + description + '\'' +
                 '}';
     }
 
-    /*
-     * Builder class for Role.
-     */
     public static class Builder {
 
-        private String roleId;
+        private Long roleId;
         private String roleName;
+        private String description;
         private List<User> users = new ArrayList<>();
 
-        public Builder setRoleId(String roleId) {
+        public Builder setRoleId(Long roleId) {
             this.roleId = roleId;
             return this;
         }
 
         public Builder setRoleName(String roleName) {
             this.roleName = roleName;
+            return this;
+        }
+
+        public Builder setDescription(String description) {
+            this.description = description;
             return this;
         }
 
@@ -103,6 +106,7 @@ public class Role {
         public Builder copy(Role role) {
             this.roleId = role.roleId;
             this.roleName = role.roleName;
+            this.description = role.description;
             this.users = role.users;
             return this;
         }

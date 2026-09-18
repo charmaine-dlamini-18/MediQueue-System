@@ -1,61 +1,56 @@
 package com.cput.mediqueuesystem.controller;
 
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.cput.mediqueuesystem.domain.Role;
 import com.cput.mediqueuesystem.service.RoleService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
 
-/*
-RoleController.java
-Role Controller
-Author: Charmaine Dlamini
-Date: 05 August 2026
- */
 @RestController
-@RequestMapping("/role")
+@RequestMapping("/api/roles")
+@CrossOrigin(origins = "*")
 public class RoleController {
 
-    private final RoleService roleService;
-
     @Autowired
-    public RoleController(RoleService roleService) {
-        this.roleService = roleService;
-    }
-    //Sending or storing info
-    @PostMapping("/create")
-    public Role create(@RequestBody Role role) {
-        return roleService.create(role);
-    }
-    //Retrieving a specific role by its ID
-    @GetMapping("/read/{roleId}")
-    public Role read(@PathVariable("roleId") String roleId) {
-        return roleService.read(roleId);
-    }
-        
-    //Updating an existing role
-    @PutMapping("/update")
-    public Role update(@RequestBody Role role) {
-        return roleService.update(role);
-    }
-    //Deleting a role by its ID
-    @DeleteMapping("/delete/{roleId}")
-    public void delete(@PathVariable String roleId) {
-        roleService.delete(roleId);
-    }
-    //Retrieving all roles
-    @GetMapping("/getAll")
-    public List<Role> getAll() {
-        return roleService.getAll();
+    private RoleService roleService;
+
+    @GetMapping
+    public ResponseEntity<List<Role>> getAllRoles() {
+        return new ResponseEntity<>(roleService.getAllRoles(), HttpStatus.OK);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<Role> getRoleById(@PathVariable Long id) {
+        Role role = roleService.getRoleById(id);
+        if (role != null) {
+            return new ResponseEntity<>(role, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @PostMapping
+    public ResponseEntity<Role> createRole(@RequestBody Role role) {
+        Role created = roleService.createRole(role);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Role> updateRole(@PathVariable Long id, @RequestBody Role role) {
+        Role updated = roleService.updateRole(id, role);
+        if (updated != null) {
+            return new ResponseEntity<>(updated, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRole(@PathVariable Long id) {
+        if (roleService.roleExists(id)) {
+            roleService.deleteRole(id);
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
 }

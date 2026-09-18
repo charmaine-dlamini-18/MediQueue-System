@@ -3,6 +3,8 @@ package com.cput.mediqueuesystem.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -31,31 +33,50 @@ public class PatientController {
     public PatientController(PatientService patientService) {
         this.patientService = patientService;
     }
-    //Sending or storing info
+
+    // Sending or storing info
     @PostMapping("/create")
-    public Patient create(@RequestBody Patient patient) {
-        return patientService.create(patient);
-    }
-    //Retrieving a specific patient by its ID
-    @GetMapping("/read/{patientId}")
-    public Patient read(@PathVariable("patientId") String patientId) {
-        return patientService.read(patientId);
-    }
-        
-    //Updating an existing patient
-    @PutMapping("/update")
-    public Patient update(@RequestBody Patient patient) {
-        return patientService.update(patient);
-    }
-    //Deleting a patient by its ID
-    @DeleteMapping("/delete/{patientId}")
-    public void delete(@PathVariable String patientId) {
-        patientService.delete(patientId);
-    }
-    //Retrieving all patients
-    @GetMapping("/getAll")
-    public List<Patient> getAll() {
-        return patientService.getAll();
+    public ResponseEntity<Patient> create(@RequestBody Patient patient) {
+        Patient created = patientService.create(patient);
+        if (created == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
+    // Retrieving a specific patient by its ID
+    @GetMapping("/read/{patientId}")
+    public ResponseEntity<Patient> read(@PathVariable("patientId") String patientId) {
+        Patient patient = patientService.read(patientId);
+        if (patient == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(patient, HttpStatus.OK);
+    }
+
+    // Updating an existing patient
+    @PutMapping("/update")
+    public ResponseEntity<Patient> update(@RequestBody Patient patient) {
+        Patient updated = patientService.update(patient);
+        if (updated == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(updated, HttpStatus.OK);
+    }
+
+    // Deleting a patient by its ID
+    @DeleteMapping("/delete/{patientId}")
+    public ResponseEntity<Boolean> delete(@PathVariable String patientId) {
+        boolean deleted = patientService.delete(patientId);
+        if (!deleted) {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(true, HttpStatus.OK);
+    }
+
+    // Retrieving all patients
+    @GetMapping("/getAll")
+    public ResponseEntity<List<Patient>> getAll() {
+        return new ResponseEntity<>(patientService.getAll(), HttpStatus.OK);
+    }
 }

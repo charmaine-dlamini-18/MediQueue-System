@@ -21,8 +21,28 @@ public class RoleFactory {
             return null;
         }
 
+        // Parse roleId from String to Long
+        Long id;
+        try {
+            id = Long.parseLong(roleId);
+        } catch (NumberFormatException e) {
+            return null; // Invalid roleId format
+        }
+
         return new Role.Builder()
-                .setRoleId(roleId)
+                .setRoleId(id)
+                .setRoleName(roleName)
+                .build();
+    }
+
+    // Overloaded method for creating Role without ID (for auto-generated IDs)
+    public static Role createRole(String roleName) {
+
+        if (Helper.isNullOrEmpty(roleName)) {
+            return null;
+        }
+
+        return new Role.Builder()
                 .setRoleName(roleName)
                 .build();
     }

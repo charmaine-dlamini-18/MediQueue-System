@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -31,16 +32,16 @@ public class SymptomsAnalysis {
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
-    // Raw symptom description from the patient
-    @Column(name = "input_text", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "input_text")
     private String inputText;
 
-    // Predicted conditions from the analysis
-    @Column(name = "predicted_conditions", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "predicted_conditions")
     private String predictedConditions;
 
-    // Suggested symptoms from the analysis
-    @Column(name = "suggested_symptoms", columnDefinition = "TEXT")
+    @Lob
+    @Column(name = "suggested_symptoms")
     private String suggestedSymptoms;
 
     // Confidence score for the analysis

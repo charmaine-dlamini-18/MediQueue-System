@@ -23,14 +23,18 @@ import jakarta.persistence.Table;
  * Date: 28 July 2026
  */
 
-@Entity
-@Table(name = "user")
-@Inheritance(strategy = InheritanceType.JOINED)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(
+    use = JsonTypeInfo.Id.NAME,
+    include = JsonTypeInfo.As.PROPERTY,
+    property = "type"
+)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = Patient.class, name = "patient"),
     @JsonSubTypes.Type(value = Staff.class, name = "staff")
 })
+@Entity
+@Table(name = "user")
+@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class User {
 
     // Primary Key
@@ -89,7 +93,7 @@ public abstract class User {
     }
 
     // Getters
-  
+
     public String getUserId() {
         return userId;
     }

@@ -3,6 +3,8 @@ package com.cput.mediqueuesystem.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,27 +39,43 @@ public class ClinicController {
     }
 
     @PostMapping("/create")
-    public Clinic create(@RequestBody Clinic clinic) {
-        return clinicService.create(clinic);
+    public ResponseEntity<Clinic> create(@RequestBody Clinic clinic) {
+        Clinic created = clinicService.create(clinic);
+        if (created == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
     @GetMapping("/read/{id}")
-    public Clinic read(@PathVariable("id") String clinicId) {
-        return clinicService.read(clinicId);
+    public ResponseEntity<Clinic> read(@PathVariable("id") String clinicId) {
+        Clinic clinic = clinicService.read(clinicId);
+        if (clinic == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(clinic, HttpStatus.OK);
     }
 
     @PutMapping("/update")
-    public Clinic update(@RequestBody Clinic clinic) {
-        return clinicService.update(clinic);
+    public ResponseEntity<Clinic> update(@RequestBody Clinic clinic) {
+        Clinic updated = clinicService.update(clinic);
+        if (updated == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(updated, HttpStatus.OK);
     }
 
     @DeleteMapping("/delete/{id}")
-    public boolean delete(@PathVariable("id") String clinicId) {
-        return clinicService.delete(clinicId);
+    public ResponseEntity<Boolean> delete(@PathVariable("id") String clinicId) {
+        boolean deleted = clinicService.delete(clinicId);
+        if (!deleted) {
+            return new ResponseEntity<>(false, HttpStatus.NOT_FOUND);
+        }
+        return new ResponseEntity<>(true, HttpStatus.OK);
     }
 
     @GetMapping("/getAll")
-    public List<Clinic> getAll() {
-        return clinicService.getAll();
+    public ResponseEntity<List<Clinic>> getAll() {
+        return new ResponseEntity<>(clinicService.getAll(), HttpStatus.OK);
     }
 }

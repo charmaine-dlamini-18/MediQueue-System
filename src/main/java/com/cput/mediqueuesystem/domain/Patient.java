@@ -1,6 +1,7 @@
 package com.cput.mediqueuesystem.domain;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -61,7 +62,7 @@ public class Patient extends User {
     }
 
     // Getters
-  
+
     public String getIdNumber() {
         return idNumber;
     }
@@ -103,6 +104,14 @@ public class Patient extends User {
 
     /*
      * Builder class for Patient.
+     *
+     * NOTE: every inherited User.Builder setter is overridden here purely to
+     * change its return type from User.Builder to Patient.Builder. Without
+     * this, chaining a User field setter (setUserId, setFirstName, etc.)
+     * together with a Patient-only setter (setIdNumber, etc.) or .build()
+     * fails to compile, because Java resolves the chain using the
+     * *declared* return type of whichever setter was last called - and
+     * User.Builder's setters are declared to return User.Builder.
      */
     public static class Builder extends User.Builder {
 
@@ -112,6 +121,64 @@ public class Patient extends User {
         private String address;
         private String medicalAidNumber;
         private String allergies;
+
+        // ---- Overridden User.Builder setters (return Patient.Builder) ----
+
+        @Override
+        public Builder setUserId(String userId) {
+            super.setUserId(userId);
+            return this;
+        }
+
+        @Override
+        public Builder setFirstName(String firstName) {
+            super.setFirstName(firstName);
+            return this;
+        }
+
+        @Override
+        public Builder setLastName(String lastName) {
+            super.setLastName(lastName);
+            return this;
+        }
+
+        @Override
+        public Builder setEmail(String email) {
+            super.setEmail(email);
+            return this;
+        }
+
+        @Override
+        public Builder setPassword(String password) {
+            super.setPassword(password);
+            return this;
+        }
+
+        @Override
+        public Builder setPhoneNumber(String phoneNumber) {
+            super.setPhoneNumber(phoneNumber);
+            return this;
+        }
+
+        @Override
+        public Builder setStatus(boolean status) {
+            super.setStatus(status);
+            return this;
+        }
+
+        @Override
+        public Builder setCreatedAt(LocalDateTime createdAt) {
+            super.setCreatedAt(createdAt);
+            return this;
+        }
+
+        @Override
+        public Builder setRole(Role role) {
+            super.setRole(role);
+            return this;
+        }
+
+        // ---- Patient-specific setters ----
 
         public Builder setIdNumber(String idNumber) {
             this.idNumber = idNumber;

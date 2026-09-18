@@ -1,5 +1,7 @@
 package com.cput.mediqueuesystem.domain;
 
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -65,11 +67,74 @@ public class Staff extends User {
 
     /*
      * Builder class for Staff.
+     *
+     * NOTE: same fix as Patient.Builder - every inherited User.Builder
+     * setter is overridden here purely to change its return type from
+     * User.Builder to Staff.Builder, so chaining works with Staff-only
+     * setters (setDepartment, setPosition) and .build().
      */
     public static class Builder extends User.Builder {
 
         private Department department;
         private String position;
+
+        // ---- Overridden User.Builder setters (return Staff.Builder) ----
+
+        @Override
+        public Builder setUserId(String userId) {
+            super.setUserId(userId);
+            return this;
+        }
+
+        @Override
+        public Builder setFirstName(String firstName) {
+            super.setFirstName(firstName);
+            return this;
+        }
+
+        @Override
+        public Builder setLastName(String lastName) {
+            super.setLastName(lastName);
+            return this;
+        }
+
+        @Override
+        public Builder setEmail(String email) {
+            super.setEmail(email);
+            return this;
+        }
+
+        @Override
+        public Builder setPassword(String password) {
+            super.setPassword(password);
+            return this;
+        }
+
+        @Override
+        public Builder setPhoneNumber(String phoneNumber) {
+            super.setPhoneNumber(phoneNumber);
+            return this;
+        }
+
+        @Override
+        public Builder setStatus(boolean status) {
+            super.setStatus(status);
+            return this;
+        }
+
+        @Override
+        public Builder setCreatedAt(LocalDateTime createdAt) {
+            super.setCreatedAt(createdAt);
+            return this;
+        }
+
+        @Override
+        public Builder setRole(Role role) {
+            super.setRole(role);
+            return this;
+        }
+
+        // ---- Staff-specific setters ----
 
         public Builder setDepartment(Department department) {
             this.department = department;
