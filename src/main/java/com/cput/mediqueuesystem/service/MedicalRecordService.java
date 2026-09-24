@@ -67,4 +67,9 @@ public class MedicalRecordService implements IMedicalRecordService {
     public List<MedicalRecord> getAll() {
         return medicalRecordRepository.findAll();
     }
+
+    @Override
+    public List<MedicalRecord> getByPatient(String patientId) {
+        return medicalRecordRepository.findByPatientUserId(patientId);
+    }
 }

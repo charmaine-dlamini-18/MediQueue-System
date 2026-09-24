@@ -25,25 +25,50 @@ function renderQueue() {
   `).join("");
 }
 
-function updateQueueStatus(index, newStatus) {
+async function updateQueueStatus(index, newStatus) {
+  const data0 = getData();
+  if (!data0.queue[index]) return;
+  const entry = data0.queue[index];
+
+  // Backend: persist on the real queue entry when it exists.
+  if (window.__mqConnected && entry.entryId) {
+    // Only one person can be "In Consultation" at a time.
+    if (newStatus === "In Consultation") {
+      for (const q of data0.queue) {
+        if (q.entryId && q.entryId !== entry.entryId && q.status === "In Consultation") {
+          await setQueueEntryStatusAsync(q.entryId, "Waiting");
+        }
+      }
+    }
+    const r = await setQueueEntryStatusAsync(entry.entryId, newStatus);
+    if (r.ok) { renderQueue(); return; }
+  }
+
   const data = getData();
-  if (!data.queue[index]) return;
-  // Only one person can be "In Consultation" at a time.
+  const i = Math.min(index, data.queue.length - 1);
   if (newStatus === "In Consultation") {
-    data.queue = data.queue.map((q, i) => i === index ? { ...q, status: newStatus } : (q.status === "In Consultation" ? { ...q, status: "Waiting" } : q));
+    data.queue = data.queue.map((q, j) => i === j ? { ...q, status: newStatus } : (q.status === "In Consultation" ? { ...q, status: "Waiting" } : q));
   } else {
-    data.queue[index] = { ...data.queue[index], status: newStatus };
+    data.queue[i] = { ...data.queue[i], status: newStatus };
   }
   setData(data);
   renderQueue();
 }
 
-function removeFromQueue(index) {
-  const data = getData();
-  const q = data.queue[index];
+async function removeFromQueue(index) {
+  const data0 = getData();
+  const q = data0.queue[index];
   if (!q) return;
   if (!confirm(`Remove ${q.patient} (${q.no}) from the queue? This can't be undone.`)) return;
-  data.queue.splice(index, 1);
+
+  if (window.__mqConnected && q.entryId) {
+    const r = await deleteQueueEntryAsync(q.entryId);
+    if (r.ok) { renderQueue(); return; }
+    alert("Could not remove the patient from the server queue.");
+  }
+
+  const data = getData();
+  data.queue.splice(Math.min(index, data.queue.length - 1), 1);
   setData(data);
   renderQueue();
 }

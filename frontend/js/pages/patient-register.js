@@ -18,6 +18,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const errorMessage =
     document.getElementById("registrationError");
 
+  const submitButton =
+    document.querySelector(".patient-register-submit");
+
 
   togglePasswordButton.addEventListener("click", () => {
 
@@ -39,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 
-  registerForm.addEventListener("submit", (event) => {
+  registerForm.addEventListener("submit", async (event) => {
 
     event.preventDefault();
 
@@ -49,11 +52,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const fullName =
       document.getElementById("fullName").value.trim();
 
-    const patientId =
-      document.getElementById("patientId").value.trim();
+    const idNumber =
+      document.getElementById("idNumber").value.trim();
 
     const phoneNumber =
-      document.getElementById("phoneNumber").value.trim();
+      document.getElementById("phoneNumber").value.trim().replace(/\s+/g, "");
 
     const dateOfBirth =
       document.getElementById("dateOfBirth").value;
@@ -77,42 +80,86 @@ document.addEventListener("DOMContentLoaded", () => {
       confirmPasswordInput.value;
 
 
-    if (password !== confirmPassword) {
-
+    if (!/^[0-9]{13}$/.test(idNumber)) {
       errorMessage.textContent =
-        "Passwords do not match.";
-
+        "Please enter a valid 13-digit South African ID number.";
       return;
     }
 
+    if (!email) {
+      errorMessage.textContent =
+        "Please enter your email address.";
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      errorMessage.textContent =
+        "Passwords do not match.";
+      return;
+    }
+
+    if (password.length < 6) {
+      errorMessage.textContent =
+        "Password must be at least 6 characters long.";
+      return;
+    }
+
+    const [firstName, lastName] = splitName(fullName);
 
     /*
-      Temporary frontend patient data.
-
-      This will later be replaced with a POST request
-      to the backend patient registration API.
+      Register with the backend. The account is only created when the
+      server accepted it — no fake success. On success the response
+      already contains a session token, so the patient is logged in
+      and sent straight to their dashboard.
     */
 
-    const patient = {
-      fullName,
-      patientId,
-      phoneNumber,
-      dateOfBirth,
-      gender,
-      address,
-      allergies,
-      email
-    };
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Creating account...";
+    }
+
+    const res =
+      await registerPatientAsync({
+        firstName,
+        lastName,
+        email,
+        password,
+        phoneNumber,
+        idNumber,
+        dateOfBirth,
+        gender,
+        address,
+        allergies
+      });
+
+    if (!res.ok || !res.data || !res.data.token) {
+
+      errorMessage.textContent =
+        authError(res);
+
+      if (submitButton) {
+        submitButton.disabled = false;
+        submitButton.textContent = "Create Account";
+      }
+
+      return;
+
+    }
 
 
-    localStorage.setItem(
-      "mq_patient",
-      JSON.stringify(patient)
-    );
+    if (firstName) {
+      localStorage.setItem(
+        "mq_patient",
+        JSON.stringify({ fullName, patientId: res.data.patientId })
+      );
+    }
+
+
+    saveSession(res.data);
 
 
     window.location.href =
-      "patient-register-success.html";
+      "patient-dashboard.html";
 
   });
 

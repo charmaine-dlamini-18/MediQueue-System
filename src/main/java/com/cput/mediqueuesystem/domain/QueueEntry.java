@@ -36,9 +36,9 @@ public class QueueEntry {
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
-    // The doctor assigned to the patient
+    // The doctor assigned to the patient (optional until assigned)
     @ManyToOne
-    @JoinColumn(name = "doctor_id", nullable = false)
+    @JoinColumn(name = "doctor_id")
     private Staff doctor;
 
     // The related visit, if available
@@ -95,6 +95,10 @@ public class QueueEntry {
 
     public Staff getDoctor() {
         return doctor;
+    }
+
+    public void setDoctor(Staff doctor) {
+        this.doctor = doctor;
     }
 
     public Visit getVisit() {

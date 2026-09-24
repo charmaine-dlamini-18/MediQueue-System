@@ -792,7 +792,7 @@ function saveConsultationRecord(data, patient) {
    SAVE RECORD
 ========================================================= */
 
-function saveRecord() {
+async function saveRecord() {
   if (!validateConsultation()) {
     return;
   }
@@ -821,6 +821,43 @@ function saveRecord() {
   setData(data);
 
 
+  /*
+    Persist the consultation on the backend when possible.
+  */
+  if (window.__mqConnected && patient.id) {
+
+    const doctor =
+      (data.users || []).find(u =>
+        userMatchesLabel(u, "Dr. N. Zulu")
+      );
+
+    if (doctor && doctor.id) {
+
+      const saved =
+        await apiRequest(
+          "POST",
+          "/medical-record/create",
+          buildMedicalRecordPayload({
+            recordId: uniqueId("REC"),
+            patientId: patient.id,
+            doctorId: doctor.id,
+            diagnosis: consultDraft.diagnosis.trim(),
+            notes: consultDraft.notes.trim(),
+            recordDate: getTodayISO()
+          })
+        );
+
+      if (!saved.ok) {
+        alert(
+          "Consultation record could not be saved to the server."
+        );
+      }
+
+    }
+
+  }
+
+
   alert(
     "Consultation record saved successfully."
   );
@@ -834,7 +871,7 @@ function saveRecord() {
    COMPLETE CONSULTATION
 ========================================================= */
 
-function completeConsultation() {
+async function completeConsultation() {
   if (!validateConsultation()) {
     return;
   }
@@ -847,6 +884,26 @@ function completeConsultation() {
 
   if (!patient) {
     return;
+  }
+
+
+  /*
+    Backend: complete this patient's queue entry.
+  */
+  if (window.__mqConnected && patient.entryId) {
+
+    const queued =
+      await setQueueEntryStatusAsync(
+        patient.entryId,
+        "Completed"
+      );
+
+    if (!queued.ok) {
+      alert(
+        "Could not update the queue on the server."
+      );
+    }
+
   }
 
 
@@ -906,7 +963,7 @@ function completeConsultation() {
    CALL NEXT PATIENT
 ========================================================= */
 
-function callNextPatient() {
+async function callNextPatient() {
   const data = getData();
 
   const patient = callNext(data);
@@ -921,7 +978,26 @@ function callNextPatient() {
   }
 
 
-  setData(data);
+  /*
+    Persist the "In Consultation" status on the backend.
+  */
+  if (window.__mqConnected && patient.entryId) {
+
+    const updated =
+      await setQueueEntryStatusAsync(
+        patient.entryId,
+        "In Consultation"
+      );
+
+    if (!updated.ok) {
+      setData(data);
+    }
+
+  } else {
+
+    setData(data);
+
+  }
 
 
   consultDraft = {
@@ -971,10 +1047,162 @@ function viewPatientHistory() {
 
 
 /* =========================================================
+   MY APPOINTMENTS
+========================================================= */
+
+function getAppointmentPatientName(appointment) {
+  const patient = appointment.patient;
+  if (!patient) {
+    return "Unknown patient";
+  }
+  const name = patient.name || patient.patientName || patient.patient || "";
+  const id = patient.patientId || patient.userId || "";
+  return name ? `${name}${id ? " · " + id : ""}` : (id || "Unknown patient");
+}
+
+function getAppointmentLabel(appointment) {
+  const clinic = appointment.clinic && appointment.clinic.clinicName;
+  const dept = appointment.department && appointment.department.departmentName;
+  return [clinic, dept].filter(Boolean).join(" · ") || "General Medicine";
+}
+
+async function loadDoctorAppointments() {
+  const listEl = document.getElementById("doctorAppointmentsList");
+  if (!listEl) {
+    return;
+  }
+
+  const doctorId = localStorage.getItem("mq_staffId");
+
+  if (!doctorId) {
+    listEl.innerHTML =
+      '<div class="admin-appointments-empty" style="font-size:13px;color:var(--slate);padding:12px 0;">Log in again to display your appointments.</div>';
+    return;
+  }
+
+  const res = await apiRequest("GET", "/appointment/doctor/" + encodeURIComponent(doctorId));
+
+  if (!res.ok) {
+    listEl.innerHTML =
+      '<div style="font-size:13px;color:var(--slate);padding:12px 0;">Could not load appointments.</div>';
+    return;
+  }
+
+  const appointments = Array.isArray(res.data) ? res.data : [];
+
+  const statusOrder = {
+    Confirmed: 0,
+    Scheduled: 1,
+    Pending: 2,
+    Completed: 3,
+    Cancelled: 4
+  };
+
+  const sorted = [...appointments].sort((a, b) => {
+    const byStatus = (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9);
+    if (byStatus !== 0) {
+      return byStatus;
+    }
+    return String(a.scheduledDate).localeCompare(String(b.scheduledDate));
+  });
+
+  if (sorted.length === 0) {
+    listEl.innerHTML =
+      '<div style="font-size:13px;color:var(--slate);padding:12px 0;">No appointments have been assigned to you yet.</div>';
+    return;
+  }
+
+  listEl.innerHTML = sorted.map(appointment => `
+    <div style="
+      display:flex;
+      align-items:center;
+      gap:14px;
+      padding:14px 0;
+      border-bottom:1px solid var(--line, #e9ebf0);
+    ">
+      <div style="
+        min-width:44px;
+        text-align:center;
+      ">
+        <div style="
+          font-size:20px;
+          font-weight:800;
+          color:var(--ink, #132238);
+          line-height:1;
+        ">
+          ${esc(formatDay(appointment.scheduledDate))}
+        </div>
+        <div style="
+          font-size:10px;
+          color:var(--slate, #6b7280);
+          margin-top:3px;
+          text-transform:uppercase;
+        ">
+          ${esc(formatMonth(appointment.scheduledDate))}
+        </div>
+      </div>
+
+      <div style="flex:1;min-width:0;">
+        <div style="
+          font-size:14px;
+          font-weight:700;
+          color:var(--ink, #132238);
+        ">
+          ${esc(getAppointmentPatientName(appointment))}
+        </div>
+        <div style="
+          font-size:12px;
+          color:var(--slate, #6b7280);
+          margin-top:2px;
+        ">
+          ${esc(appointment.reason || "General consultation")}
+        </div>
+        <div style="
+          font-size:12px;
+          color:var(--teal, #0d9488);
+          margin-top:2px;
+        ">
+          ${esc(getAppointmentLabel(appointment))} ·
+          ${esc(appointment.scheduledTime || "TBC")}
+        </div>
+      </div>
+
+      <span class="badge" style="
+        background:${appointment.status === "Confirmed" ? "var(--teal-tint, #e0f2f1)" : "var(--gold-tint, #fff4d6)"};
+        color:${appointment.status === "Confirmed" ? "var(--teal, #0d9488)" : "var(--gold, #b8860b)"};
+        white-space:nowrap;
+      ">
+        ${esc(appointment.status || "Scheduled")}
+      </span>
+    </div>
+  `).join("");
+}
+
+function formatDay(dateValue) {
+  if (!dateValue) {
+    return "--";
+  }
+  return String(dateValue).slice(8, 10).replace(/^0/, "");
+}
+
+function formatMonth(dateValue) {
+  if (!dateValue) {
+    return "";
+  }
+  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+  const month = parseInt(String(dateValue).slice(5, 7), 10);
+  return months[month - 1] || "";
+}
+
+
+/* =========================================================
    START
 ========================================================= */
 
 document.addEventListener(
   "DOMContentLoaded",
-  renderDoctorDashboard
+  () => {
+    renderDoctorDashboard();
+    loadDoctorAppointments();
+  }
 );

@@ -60,4 +60,9 @@ public class MedicalRecordController {
     public List<MedicalRecord> getAll() {
         return medicalRecordService.getAll();
     }
+
+    @GetMapping("/patient/{patientId}")
+    public List<MedicalRecord> getByPatient(@PathVariable("patientId") String patientId) {
+        return medicalRecordService.getByPatient(patientId);
+    }
 }

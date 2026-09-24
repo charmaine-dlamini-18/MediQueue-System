@@ -1,5 +1,8 @@
 package com.cput.mediqueuesystem.repository;
 
+import java.time.LocalDate;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,4 +18,6 @@ import com.cput.mediqueuesystem.domain.Queue;
 
 @Repository
 public interface QueueRepository extends JpaRepository<Queue, String> {
+
+    Optional<Queue> findByClinicClinicIdAndDate(String clinicId, LocalDate date);
 }

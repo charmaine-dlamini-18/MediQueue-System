@@ -60,4 +60,10 @@ public class PrescriptionController {
     public List<Prescription> getAll() {
         return prescriptionService.getAll();
     }
+
+    @PutMapping("/status/{id}/{status}")
+    public Prescription updateStatus(@PathVariable("id") String prescriptionId,
+                                     @PathVariable("status") String status) {
+        return prescriptionService.updateStatus(prescriptionId, status);
+    }
 }

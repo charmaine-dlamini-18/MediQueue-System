@@ -2,6 +2,8 @@ package com.cput.mediqueuesystem.domain;
 
 import java.time.LocalDateTime;
 
+import com.cput.mediqueuesystem.util.PasswordUtil;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -12,6 +14,8 @@ import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 /*
@@ -110,8 +114,17 @@ public abstract class User {
         return email;
     }
 
+    // Password is never serialized back to clients; it is only
+    // accepted on write, so hashed values never leak in responses.
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     public String getPassword() {
         return password;
+    }
+
+    // Used by the auth service when migrating a legacy plaintext
+    // password to a hashed value after a successful login.
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getPhoneNumber() {
@@ -128,6 +141,16 @@ public abstract class User {
 
     public Role getRole() {
         return role;
+    }
+
+    // Hashes the password before persisting/updating if it is still
+    // plain text. Inherited by Patient and Staff entities.
+    @PrePersist
+    @PreUpdate
+    protected void hashPasswordIfNeeded() {
+        if (password != null && !PasswordUtil.isHashed(password)) {
+            this.password = PasswordUtil.hash(password);
+        }
     }
 
     // Returns the User object as a String

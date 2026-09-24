@@ -1,83 +1,264 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  /*
-    Temporary Patient Dashboard data.
+  // render-helpers.js isn't loaded on the patient portal; provide the
+  // tiny escape helper used in the templates below when absent.
+  if (typeof esc !== "function") {
+    window.esc = (s) => String(s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
 
-    Later this information will come from
-    the MediQueue backend/database.
-  */
+  if (!requireRole("PATIENT")) return;
 
-  const defaultPatient = {
-    fullName: "Charmaine Dlamini"
-  };
+  const patientId =
+    localStorage.getItem("mq_patientId");
 
+  const sessionName =
+    localStorage.getItem("mq_name") || "Patient";
 
-  const storedPatient =
-    localStorage.getItem("mq_patient");
-
-
-  let patient = defaultPatient;
+  const firstName =
+    sessionName.split(" ")[0];
 
 
-  if (storedPatient) {
+  const topbarEl =
+    document.getElementById("patientTopbarName");
 
-    try {
+  const welcomeEl =
+    document.getElementById("patientWelcome");
 
-      patient = JSON.parse(storedPatient);
+  const queueNumberEl =
+    document.getElementById("queueNumber");
 
-    } catch (error) {
+  const totalVisitsEl =
+    document.getElementById("totalVisits");
 
-      patient = defaultPatient;
 
-    }
+  if (topbarEl) topbarEl.textContent = firstName;
 
+  if (welcomeEl) {
+    welcomeEl.textContent = `Welcome back, ${firstName}!`;
   }
 
 
-  const fullName =
-    patient.fullName || defaultPatient.fullName;
-
-
-  const firstName =
-    fullName.split(" ")[0];
-
-
-  document.getElementById(
-    "patientTopbarName"
-  ).textContent = firstName;
-
-
-  document.getElementById(
-    "patientWelcome"
-  ).textContent =
-    `Welcome back, ${firstName}!`;
+  // Backend returns the assigned doctor as a full Staff object; turn it
+  // into a display name (e.g. "Dr. N. Zulu"). Falls back to a plain
+  // string if some page already formats it.
+  function doctorDisplay(a) {
+    const d = a && a.doctor;
+    if (!d) return "";
+    if (typeof d === "string") return d;
+    if (typeof staffDisplayName === "function") return staffDisplayName(d);
+    if (typeof fullName === "function") return fullName(d);
+    return String(d.firstName || d.lastName || "").trim() || "";
+  }
 
 
   /*
-    Temporary dashboard values.
+    Pull the patient's real profile and appointments from the backend.
+    Nothing here is hardcoded — the numbers and lists come from the
+    database and refresh on every visit.
   */
 
-  document.getElementById(
-    "queueNumber"
-  ).textContent = "A-023";
+  renderDashboard();
+
+  async function renderDashboard() {
+
+    const [meRes, apptsRes] = await Promise.all([
+      meAsync(),
+      patientId
+        ? apiRequest("GET", "/appointment/patient/" + encodeURIComponent(patientId))
+        : Promise.resolve({ ok: false, status: 401 })
+    ]);
+
+    if (meRes.ok && meRes.data && meRes.data.firstName) {
+      const name = [meRes.data.firstName, meRes.data.lastName].filter(Boolean).join(" ");
+      localStorage.setItem("mq_name", name);
+      if (topbarEl) topbarEl.textContent = meRes.data.firstName;
+      if (welcomeEl) welcomeEl.textContent = `Welcome back, ${meRes.data.firstName}!`;
+    }
+
+    const appointments =
+      (apptsRes.ok && Array.isArray(apptsRes.data)) ? apptsRes.data : [];
 
 
-  document.getElementById(
-    "totalVisits"
-  ).textContent = "8";
+    // Queue number for this patient (from the live queue), else "—".
+    const cached = typeof getData === "function" ? getData() : null;
+    const qEntry = patientId && cached
+      ? (cached.queue || []).find((q) => q.id === patientId)
+      : null;
+
+    queueNumberEl.textContent =
+      qEntry && qEntry.no ? qEntry.no : "—";
+
+    queueNumberEl.parentElement.querySelector(
+      ".patient-dashboard-card-sub"
+    ).textContent =
+      qEntry
+        ? `Status: ${qEntry.status}`
+        : "No active queue number";
 
 
-  /*
-    Logout
-  */
+    totalVisitsEl.textContent =
+      String(appointments.length);
 
-  document.getElementById(
-    "patientLogout"
-  ).addEventListener("click", () => {
 
-    localStorage.removeItem("mq_role");
+    renderAppointments(appointments);
+    renderNotifications(appointments);
+  }
 
-  });
+
+  function renderAppointments(appointments) {
+
+    const listEl = document.querySelector(
+      ".patient-appointment-list"
+    );
+
+    if (!listEl) return;
+
+
+    if (!appointments.length) {
+
+      listEl.innerHTML =
+        `<div class="patient-appointment-empty">
+           You have no appointments yet.
+           <a href="book-appointment.html">Book your first visit</a>.
+         </div>`;
+
+      return;
+
+    }
+
+
+    // Sort newest scheduled date first, show the latest few.
+    const sorted =
+      appointments.slice()
+        .sort((a, b) => String(b.scheduledDate || "").localeCompare(String(a.scheduledDate || "")));
+
+    listEl.innerHTML =
+      sorted.slice(0, 3).map((a) => {
+
+        const parts = String(a.scheduledDate || "").split("-");
+        const month = parts[1]
+          ? new Date(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])))
+              .toLocaleString("en", { month: "short" }).toUpperCase()
+          : "";
+        const day = Number(parts[2]) || "";
+        const doctor = doctorDisplay(a) || "Unassigned";
+        const doctorClass = doctorDisplay(a) ? "" : "muted";
+
+        return `
+          <div class="patient-appointment-item">
+
+            <div class="patient-appointment-date">
+              <span class="patient-appointment-month">${esc(month)}</span>
+              <strong>${esc(day)}</strong>
+            </div>
+
+
+            <div class="patient-appointment-info">
+
+              <div class="patient-appointment-doctor ${doctorClass}">
+                ${esc(doctor)}
+              </div>
+
+              <div class="patient-appointment-reason">
+                ${esc(a.reason || "General consultation")}
+              </div>
+
+              <div class="patient-appointment-meta">
+
+                <span>${esc(fmtDate(a.scheduledDate))}</span>
+
+                <span>•</span>
+
+                <span>${esc(fmtTime12(a.scheduledTime))}</span>
+
+                <span>•</span>
+
+                <span>${typeof badge === "function" ? badge(a.status || "Pending") : esc(a.status)}</span>
+
+              </div>
+
+            </div>
+
+          </div>
+        `;
+
+      }).join("");
+  }
+
+
+  function renderNotifications(appointments) {
+
+    const listEl = document.querySelector(
+      ".patient-notification-list"
+    );
+
+    if (!listEl) return;
+
+
+    const items = [];
+
+    const confirmed = appointments.find(
+      (a) => String(a.status || "").toLowerCase() === "confirmed"
+    );
+
+    if (confirmed) {
+      items.push({
+        title: "Appointment Confirmed",
+        text: doctorDisplay(confirmed)
+          ? "Your appointment with " + doctorDisplay(confirmed) + " has been confirmed."
+          : "Your appointment has been confirmed."
+      });
+    }
+
+    const pending = appointments.find(
+      (a) => String(a.status || "").toLowerCase() === "pending"
+    );
+
+    if (pending) {
+      items.push({
+        title: "Booking Received",
+        text: "Your booking is pending doctor assignment at the clinic."
+      });
+    }
+
+    if (!items.length && appointments.length) {
+      items.push({
+        title: "Latest Booking",
+        text: "Your most recent appointment is scheduled for " + fmtDate(appointments[0].scheduledDate) + "."
+      });
+    }
+
+    if (!items.length) {
+      items.push({
+        title: "No notifications",
+        text: "Book an appointment to start receiving updates."
+      });
+    }
+
+
+    listEl.innerHTML =
+      items.map((n) => `
+        <div class="patient-notification-item">
+
+          <div class="patient-notification-dot"></div>
+
+          <div>
+
+            <div class="patient-notification-title">
+              ${esc(n.title)}
+            </div>
+
+            <div class="patient-notification-text">
+              ${esc(n.text)}
+            </div>
+
+          </div>
+
+        </div>
+      `).join("");
+  }
 
 });
 
@@ -98,6 +279,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const overlay =
     document.getElementById("patientMenuOverlay");
+
+  const logoutLink =
+    document.getElementById("patientLogout");
+
+
+  if (logoutLink) {
+    logoutLink.addEventListener("click", (e) => {
+      e.preventDefault();
+      mqLogout();
+    });
+  }
 
 
   if (
@@ -170,8 +362,6 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 
 
-  /* Close menu after selecting a navigation item */
-
   sidebar
     .querySelectorAll(".nav-item")
     .forEach(link => {
@@ -183,8 +373,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     });
 
-
-  /* Escape key closes menu */
 
   document.addEventListener(
     "keydown",

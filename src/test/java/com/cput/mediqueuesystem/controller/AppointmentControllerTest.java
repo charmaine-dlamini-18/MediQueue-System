@@ -1,11 +1,15 @@
 package com.cput.mediqueuesystem.controller;
 
 import com.cput.mediqueuesystem.domain.*;
+import com.cput.mediqueuesystem.dto.LoginRequest;
 import com.cput.mediqueuesystem.factory.*;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
@@ -29,6 +33,26 @@ class AppointmentControllerTest {
     @Autowired
     private TestRestTemplate restTemplate;
     private static final String BASE_URL = "/appointment";
+    private static String token;
+
+    @BeforeEach
+    public void authenticate() {
+        if (token != null) {
+            return;
+        }
+        LoginRequest login = new LoginRequest("s.ndaba@mediqueue.co.za", "pass123");
+        ResponseEntity<com.cput.mediqueuesystem.dto.AuthResponse> response =
+                restTemplate.postForEntity("/api/auth/login", login, com.cput.mediqueuesystem.dto.AuthResponse.class);
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertNotNull(response.getBody());
+        token = response.getBody().getToken();
+    }
+
+    private HttpEntity<?> withToken(Object body) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+        return new HttpEntity<>(body, headers);
+    }
 
     @BeforeAll
     public static void setUp() {
@@ -69,7 +93,7 @@ class AppointmentControllerTest {
                 "walk-in", "pending", doctor);
 
         String url = BASE_URL + "/create";
-        Appointment created = this.restTemplate.postForObject(url, appointment, Appointment.class);
+        Appointment created = this.restTemplate.postForObject(url, withToken(appointment), Appointment.class);
         assertNotNull(created);
         assertEquals(appointment.getAppointmentId(), created.getAppointmentId());
         appointment = created;
@@ -91,7 +115,8 @@ class AppointmentControllerTest {
                 .setStatus("confirmed")
                 .build();
         String url = BASE_URL + "/update";
-        this.restTemplate.put(url, updatedAppt);
+        ResponseEntity<Appointment> updateResponse =
+                this.restTemplate.exchange(url, HttpMethod.PUT, withToken(updatedAppt), Appointment.class);
         ResponseEntity<Appointment> response = this.restTemplate.getForEntity(BASE_URL + "/read/" + updatedAppt.getAppointmentId(), Appointment.class);
         assertEquals(response.getStatusCode(), HttpStatus.OK);
         assertNotNull(response.getBody());
@@ -102,7 +127,7 @@ class AppointmentControllerTest {
     @Disabled
     void e_delete() {
         String url = BASE_URL + "/delete/" + appointment.getAppointmentId();
-        this.restTemplate.delete(url);
+        this.restTemplate.exchange(url, HttpMethod.DELETE, withToken(null), Void.class);
         ResponseEntity<Appointment> response = this.restTemplate.getForEntity(BASE_URL + "/read/" + appointment.getAppointmentId(), Appointment.class);
         assertNull(response.getBody());
         System.out.println("Appointment deleted: true");

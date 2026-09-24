@@ -56,7 +56,7 @@ function setupAssessmentForm(patient) {
     return;
   }
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const bloodPressure =
@@ -132,6 +132,24 @@ function setupAssessmentForm(patient) {
 
 
     saveAssessment(assessment);
+
+    /*
+      Persist the vitals on the backend when possible, then
+      keep the patient marked as waiting in the real queue.
+    */
+    if (window.__mqConnected && patient.id) {
+      await createVitalSignsAsync({
+        patientId: patient.id,
+        temperature: assessment.temperature,
+        bloodPressure: assessment.bloodPressure,
+        heartRate: assessment.heartRate,
+        weight: assessment.weight
+      });
+    }
+
+    if (window.__mqConnected && patient.entryId) {
+      await setQueueEntryStatusAsync(patient.entryId, "Waiting");
+    }
 
     updatePatientQueueStatus(
       patient.id,

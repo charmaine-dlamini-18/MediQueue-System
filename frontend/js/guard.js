@@ -1,22 +1,57 @@
-// js/guard.js — loaded on every page except index.html.
-// Redirects to login if nobody's logged in, wires up Logout,
-// applies the saved profile name to the topbar, and wires up
-// the notification bell + profile dropdowns.
+// js/guard.js — loaded on every authenticated page (data.js is loaded
+// before it). Requires a real session token: if nobody is logged in the
+// user is sent back to the entry page. Wires up Logout (which also
+// invalidates the token on the backend), applies the session profile
+// name, and keeps the notification bell + profile dropdown working.
+//
+// Pages that restrict access to specific roles call requireRole(...).
 
 const ROLE_KEY = "mq_role";
 
+// Ends the session: tells the backend the token is dead, then clears the
+// local session and returns to the entry page.
+function mqLogout() {
+  const token = typeof getToken === "function" ? getToken() : null;
+  const done = () => {
+    clearSession();
+    window.location.href = "index.html";
+  };
+  if (token && typeof logoutAsync === "function") {
+    logoutAsync().finally(done);
+  } else {
+    done();
+  }
+}
+
 (function guard() {
-  const role = localStorage.getItem(ROLE_KEY);
-  if (!role) window.location.href = "index.html";
+  if (typeof getToken !== "function" || !getToken()) {
+    window.location.href = "index.html";
+    return;
+  }
 })();
+
+// Restricts a page to one or more roles. Redirects to the role's home or
+// the entry page when the visitor is not allowed. Returns true when the
+// visitor may stay.
+function requireRole(...allowed) {
+  const role = localStorage.getItem(ROLE_KEY);
+  if (!getToken()) {
+    window.location.href = "index.html";
+    return false;
+  }
+  if (allowed.length && !allowed.includes(role)) {
+    window.location.href = homeForRole(role);
+    return false;
+  }
+  return true;
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const logoutLink = document.getElementById("logoutLink");
   if (logoutLink) {
     logoutLink.addEventListener("click", (e) => {
       e.preventDefault();
-      localStorage.removeItem(ROLE_KEY);
-      window.location.href = "index.html";
+      mqLogout();
     });
   }
 
@@ -30,13 +65,9 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function applyProfileName() {
-  if (typeof getData !== "function") return;
-  const role = localStorage.getItem(ROLE_KEY);
-  const data = getData();
-  const profile = data.profiles && data.profiles[role];
-  if (!profile) return;
+  const name = localStorage.getItem("mq_name");
   const nameEl = document.querySelector(".user-name");
-  if (nameEl) nameEl.textContent = profile.name;
+  if (name && nameEl) nameEl.textContent = name;
 }
 
 function closeOtherDropdowns(except) {
@@ -81,7 +112,6 @@ function setupProfileMenu() {
   const userBlock = document.querySelector(".user-block");
   if (!userBlock) return;
 
-  const role = localStorage.getItem(ROLE_KEY);
   const roleLabel = userBlock.querySelector(".user-role")?.textContent || "";
 
   const dropdown = document.createElement("div");
@@ -102,7 +132,6 @@ function setupProfileMenu() {
 
   dropdown.querySelector("#profileLogoutBtn").addEventListener("click", (e) => {
     e.stopPropagation();
-    localStorage.removeItem(ROLE_KEY);
-    window.location.href = "index.html";
+    mqLogout();
   });
 }

@@ -29,7 +29,7 @@ class VitalSignsFactoryTest {
 
         com.cput.mediqueuesystem.domain.VitalSigns vitals = VitalSignsFactory.createVitalSigns(
                 "VS-0001", visit, "36.8", "117/76", "78", "80",
-                null, LocalDateTime.of(2026, 5, 6, 9, 15));
+                null, null, null, null, null, LocalDateTime.of(2026, 5, 6, 9, 15));
 
         assertNotNull(vitals);
         assertEquals("VS-0001", vitals.getVitalId());
@@ -45,7 +45,8 @@ class VitalSignsFactoryTest {
         Visit visit = buildVisit();
 
         com.cput.mediqueuesystem.domain.VitalSigns vitals = VitalSignsFactory.createVitalSigns(
-                null, visit, "36.8", "117/76", "78", "80", null, LocalDateTime.now());
+                null, visit, "36.8", "117/76", "78", "80", null, null, null, null, null,
+                LocalDateTime.now());
 
         assertNull(vitals);
     }
@@ -55,7 +56,8 @@ class VitalSignsFactoryTest {
         Visit visit = buildVisit();
 
         com.cput.mediqueuesystem.domain.VitalSigns vitals = VitalSignsFactory.createVitalSigns(
-                "   ", visit, "36.8", "117/76", "78", "80", null, LocalDateTime.now());
+                "   ", visit, "36.8", "117/76", "78", "80", null, null, null, null, null,
+                LocalDateTime.now());
 
         assertNull(vitals);
     }
@@ -63,7 +65,8 @@ class VitalSignsFactoryTest {
     @Test
     void createVitalSigns_withNullVisit_returnsNull() {
         com.cput.mediqueuesystem.domain.VitalSigns vitals = VitalSignsFactory.createVitalSigns(
-                "VS-0002", null, "36.8", "117/76", "78", "80", null, LocalDateTime.now());
+                "VS-0002", null, "36.8", "117/76", "78", "80", null, null, null, null, null,
+                LocalDateTime.now());
 
         assertNull(vitals);
     }
@@ -74,7 +77,8 @@ class VitalSignsFactoryTest {
         Visit visit = buildVisit();
 
         com.cput.mediqueuesystem.domain.VitalSigns vitals = VitalSignsFactory.createVitalSigns(
-                "VS-0003", visit, null, "117/76", "78", "80", null, LocalDateTime.now());
+                "VS-0003", visit, null, "117/76", "78", "80", null, null, null, null, null,
+                LocalDateTime.now());
 
         assertNotNull(vitals);
     }
@@ -85,7 +89,8 @@ class VitalSignsFactoryTest {
         Visit visit = buildVisit();
 
         com.cput.mediqueuesystem.domain.VitalSigns vitals = VitalSignsFactory.createVitalSigns(
-                "VS-0004", visit, "36.8", "117/76", "78", "80", null, null);
+                "VS-0004", visit, "36.8", "117/76", "78", "80", null, null, null, null, null,
+                null);
 
         assertNotNull(vitals);
         assertNull(vitals.getRecordedBy());

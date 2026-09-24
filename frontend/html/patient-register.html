@@ -66,15 +66,20 @@
             </div>
 
             <div class="field">
-              <label for="patientId">
-                Patient ID
+              <label for="idNumber">
+                ID Number
               </label>
 
               <input
                 class="input"
                 type="text"
-                id="patientId"
-                placeholder="Enter patient ID"
+                id="idNumber"
+                placeholder="13-digit SA ID number"
+                inputmode="numeric"
+                minlength="13"
+                maxlength="13"
+                pattern="[0-9]{13}"
+                title="Enter your 13-digit South African ID number"
                 required
               />
             </div>
@@ -320,6 +325,7 @@
   </div>
 
 
+  <script src="../js/data.js"></script>
   <script src="../js/pages/patient-register.js"></script>
 
 </body>

@@ -417,7 +417,7 @@ function renderDoctorPrescriptions() {
    SAVE PRESCRIPTION
 ========================================================= */
 
-function savePrescription(event) {
+async function savePrescription(event) {
   event.preventDefault();
 
 
@@ -545,6 +545,46 @@ function savePrescription(event) {
       "Pending"
 
   };
+
+
+  /*
+    Persist the prescription on the backend when possible.
+    The page still keeps its own display record either way.
+  */
+  if (window.__mqConnected && patient.id) {
+
+    const record =
+      (data.records || []).find(r =>
+        r.patientId === patient.id
+      );
+
+    if (record && record.recordId) {
+
+      const saved =
+        await apiRequest(
+          "POST",
+          "/prescription/create",
+          buildPrescriptionPayload({
+            prescriptionId: prescription.id,
+            recordId: record.recordId,
+            medicationName: medication,
+            dosage: dosage,
+            instructions: instructions,
+            prescriptionDate: prescription.prescribedDate
+          })
+        );
+
+      if (!saved.ok) {
+
+        alert(
+          `Prescription ${prescription.id} could not be saved to the server – saved locally only.`
+        );
+
+      }
+
+    }
+
+  }
 
 
   data.prescriptions.unshift(

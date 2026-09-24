@@ -332,6 +332,28 @@
   gap: 24px;
 }
 
+.admin-pending-list {
+  padding: 10px 16px 16px;
+}
+
+.admin-pending-item .activity-content {
+  display: block;
+}
+
+.admin-assign-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.admin-doctor-select {
+  flex: 1;
+  min-width: 150px;
+  max-width: 260px;
+}
+
 .admin-side-column {
   display: flex;
   flex-direction: column;
@@ -997,6 +1019,15 @@
   text-align: center;
 }
 
+.patient-login-error {
+  min-height: 18px;
+  margin-bottom: 8px;
+  color: #B84A3A;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
 
 /* Patient registration mobile layout */
 
@@ -1489,6 +1520,21 @@
 
 .patient-appointment-list {
   padding: 20px;
+}
+
+.muted {
+  color: #8a93a6;
+}
+
+.patient-appointment-empty {
+  font-size: 14px;
+  color: var(--slate);
+  line-height: 1.6;
+}
+
+.patient-appointment-empty a {
+  color: var(--teal);
+  text-decoration: underline;
 }
 
 .patient-appointment-item {

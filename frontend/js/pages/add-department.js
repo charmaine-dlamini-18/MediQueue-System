@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const form = document.getElementById("addDepartmentForm");
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
 
     event.preventDefault();
 
@@ -25,6 +25,26 @@ document.addEventListener("DOMContentLoaded", () => {
         .getElementById("departmentDescription")
         .value
         .trim();
+
+    /*
+      Create the department on the backend when it is reachable.
+    */
+    if (window.__mqConnected) {
+
+      const saved =
+        await createDepartmentAsync({
+          departmentId,
+          departmentName,
+          description: departmentDescription
+        });
+
+      if (!saved.ok) {
+        alert(
+          "Could not save the department to the server – saved locally only."
+        );
+      }
+
+    }
 
     const newDepartment = {
 

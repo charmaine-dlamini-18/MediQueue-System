@@ -22,7 +22,7 @@ togglePwBtn.addEventListener("click", () => {
   }
 });
 
-loginForm.addEventListener("submit", (event) => {
+loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
   const username = usernameInput.value.trim();
@@ -33,7 +33,7 @@ loginForm.addEventListener("submit", (event) => {
   loginError.textContent = "";
 
   if (!username) {
-    showLoginError("Please enter your username.");
+    showLoginError("Please enter your email/username.");
     usernameInput.focus();
     return;
   }
@@ -55,17 +55,43 @@ loginForm.addEventListener("submit", (event) => {
     return;
   }
 
-  localStorage.setItem("mq_username", username);
-  localStorage.setItem("mq_role", role);
-  localStorage.setItem("mq_logged_in", "true");
+  /*
+    Authenticate against the backend. The token is only saved when the
+    server validated the credentials — no fake logins allowed. The
+    selected role must match the account's real role.
+  */
 
   loginButton.disabled = true;
   loginButton.textContent = "Logging in...";
 
+  const res = await loginAsync({ email: username, password });
+
+  if (!res.ok || !res.data || !res.data.token) {
+    showLoginError(authError(res));
+    loginButton.disabled = false;
+    loginButton.textContent = "Log in";
+    return;
+  }
+
+  const actualRole = res.data.role;
+
+  if (actualRole !== role) {
+    showLoginError(
+      "That account is registered as " + actualRole + ", not " + role + "."
+    );
+    loginButton.disabled = false;
+    loginButton.textContent = "Log in";
+    return;
+  }
+
+  saveSession(res.data);
   window.location.href = ROLE_HOME[role];
 });
 
 function showLoginError(message) {
+  loginError.style.display = "none";
   loginError.textContent = message;
+  // force reflow so the display change applies before showing again
+  void loginError.offsetHeight;
   loginError.style.display = "block";
 }

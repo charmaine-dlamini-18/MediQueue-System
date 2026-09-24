@@ -15,6 +15,10 @@ import com.cput.mediqueuesystem.domain.Staff;
  * required fields are missing or invalid, so callers can check
  * for a null result before persisting.
  *
+ * A doctor is optional at this stage: patients book without a
+ * doctor and staff assign one later. The scheduled date, scheduled
+ * time and patient are always required.
+ *
  * Author: Uya
  * Date: 03 August 2026
  */
@@ -27,7 +31,6 @@ public class AppointmentFactory {
 
         if (GenericValidator.isBlankOrNull(appointmentId)
                 || patient == null
-                || doctor == null
                 || scheduledDate == null
                 || scheduledTime == null) {
             return null;

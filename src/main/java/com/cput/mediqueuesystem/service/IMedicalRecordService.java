@@ -15,4 +15,6 @@ import com.cput.mediqueuesystem.domain.MedicalRecord;
 public interface IMedicalRecordService extends IService<MedicalRecord, String> {
 
     List<MedicalRecord> getAll();
+
+    List<MedicalRecord> getByPatient(String patientId);
 }

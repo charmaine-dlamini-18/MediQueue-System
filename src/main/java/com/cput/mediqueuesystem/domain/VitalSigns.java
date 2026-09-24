@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -47,6 +48,24 @@ public class VitalSigns {
     @Column(name = "weight")
     private String weight;
 
+    // Oxygen saturation reading, e.g. "98"
+    @Column(name = "oxygen_saturation")
+    private String oxygenSaturation;
+
+    // Respiratory rate reading, e.g. "16"
+    @Column(name = "respiratory_rate")
+    private String respiratoryRate;
+
+    // Patient-reported symptoms
+    @Lob
+    @Column(name = "symptoms")
+    private String symptoms;
+
+    // Nurse observations / notes
+    @Lob
+    @Column(name = "nurse_notes")
+    private String nurseNotes;
+
     // Staff member who recorded these vitals
     @ManyToOne
     @JoinColumn(name = "recorded_by")
@@ -68,6 +87,10 @@ public class VitalSigns {
         this.bloodPressure = builder.bloodPressure;
         this.heartRate = builder.heartRate;
         this.weight = builder.weight;
+        this.oxygenSaturation = builder.oxygenSaturation;
+        this.respiratoryRate = builder.respiratoryRate;
+        this.symptoms = builder.symptoms;
+        this.nurseNotes = builder.nurseNotes;
         this.recordedBy = builder.recordedBy;
         this.recordedAt = builder.recordedAt;
     }
@@ -98,6 +121,22 @@ public class VitalSigns {
         return weight;
     }
 
+    public String getOxygenSaturation() {
+        return oxygenSaturation;
+    }
+
+    public String getRespiratoryRate() {
+        return respiratoryRate;
+    }
+
+    public String getSymptoms() {
+        return symptoms;
+    }
+
+    public String getNurseNotes() {
+        return nurseNotes;
+    }
+
     public Staff getRecordedBy() {
         return recordedBy;
     }
@@ -116,6 +155,10 @@ public class VitalSigns {
                 ", bloodPressure='" + bloodPressure + '\'' +
                 ", heartRate='" + heartRate + '\'' +
                 ", weight='" + weight + '\'' +
+                ", oxygenSaturation='" + oxygenSaturation + '\'' +
+                ", respiratoryRate='" + respiratoryRate + '\'' +
+                ", symptoms='" + symptoms + '\'' +
+                ", nurseNotes='" + nurseNotes + '\'' +
                 ", recordedBy=" + (recordedBy != null ? recordedBy.getUserId() : null) +
                 ", recordedAt=" + recordedAt +
                 '}';
@@ -132,6 +175,10 @@ public class VitalSigns {
         private String bloodPressure;
         private String heartRate;
         private String weight;
+        private String oxygenSaturation;
+        private String respiratoryRate;
+        private String symptoms;
+        private String nurseNotes;
         private Staff recordedBy;
         private LocalDateTime recordedAt;
 
@@ -165,6 +212,26 @@ public class VitalSigns {
             return this;
         }
 
+        public Builder setOxygenSaturation(String oxygenSaturation) {
+            this.oxygenSaturation = oxygenSaturation;
+            return this;
+        }
+
+        public Builder setRespiratoryRate(String respiratoryRate) {
+            this.respiratoryRate = respiratoryRate;
+            return this;
+        }
+
+        public Builder setSymptoms(String symptoms) {
+            this.symptoms = symptoms;
+            return this;
+        }
+
+        public Builder setNurseNotes(String nurseNotes) {
+            this.nurseNotes = nurseNotes;
+            return this;
+        }
+
         public Builder setRecordedBy(Staff recordedBy) {
             this.recordedBy = recordedBy;
             return this;
@@ -182,6 +249,10 @@ public class VitalSigns {
             this.bloodPressure = vitalSigns.bloodPressure;
             this.heartRate = vitalSigns.heartRate;
             this.weight = vitalSigns.weight;
+            this.oxygenSaturation = vitalSigns.oxygenSaturation;
+            this.respiratoryRate = vitalSigns.respiratoryRate;
+            this.symptoms = vitalSigns.symptoms;
+            this.nurseNotes = vitalSigns.nurseNotes;
             this.recordedBy = vitalSigns.recordedBy;
             this.recordedAt = vitalSigns.recordedAt;
             return this;
