@@ -68,4 +68,14 @@ public class PrescriptionService implements IPrescriptionService {
     public List<Prescription> getAll() {
         return prescriptionRepository.findAll();
     }
+
+    @Override
+    public Prescription updateStatus(String prescriptionId, String status) {
+        Prescription prescription = prescriptionRepository.findById(prescriptionId).orElse(null);
+        if (prescription == null || status == null || status.isBlank()) {
+            return null;
+        }
+        prescription.setStatus(status);
+        return prescriptionRepository.save(prescription);
+    }
 }

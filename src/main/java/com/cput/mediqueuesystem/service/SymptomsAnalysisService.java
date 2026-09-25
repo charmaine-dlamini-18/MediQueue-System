@@ -21,10 +21,13 @@ import com.cput.mediqueuesystem.repository.SymptomsAnalysisRepository;
 public class SymptomsAnalysisService implements ISymptomsAnalysisService {
 
     private final SymptomsAnalysisRepository symptomsAnalysisRepository;
+    private final SymptomAnalyzerService symptomAnalyzerService;
 
     @Autowired
-    public SymptomsAnalysisService(SymptomsAnalysisRepository symptomsAnalysisRepository) {
+    public SymptomsAnalysisService(SymptomsAnalysisRepository symptomsAnalysisRepository,
+                                   SymptomAnalyzerService symptomAnalyzerService) {
         this.symptomsAnalysisRepository = symptomsAnalysisRepository;
+        this.symptomAnalyzerService = symptomAnalyzerService;
     }
 
     @Override
@@ -64,5 +67,15 @@ public class SymptomsAnalysisService implements ISymptomsAnalysisService {
     @Override
     public List<SymptomsAnalysis> getAll() {
         return symptomsAnalysisRepository.findAll();
+    }
+
+    @Override
+    public SymptomsAnalysis analyze(String patientId, String inputText) {
+        return symptomAnalyzerService.analyze(patientId, inputText);
+    }
+
+    @Override
+    public List<SymptomsAnalysis> getByPatient(String patientId) {
+        return symptomAnalyzerService.getByPatient(patientId);
     }
 }

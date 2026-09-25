@@ -20,6 +20,8 @@ public class VitalSignsFactory {
 
     public static VitalSigns createVitalSigns(String vitalId, Visit visit, String temperature,
                                                String bloodPressure, String heartRate, String weight,
+                                               String oxygenSaturation, String respiratoryRate,
+                                               String symptoms, String nurseNotes,
                                                Staff recordedBy, LocalDateTime recordedAt) {
 
         if (GenericValidator.isBlankOrNull(vitalId) || visit == null) {
@@ -33,6 +35,10 @@ public class VitalSignsFactory {
                 .setBloodPressure(bloodPressure)
                 .setHeartRate(heartRate)
                 .setWeight(weight)
+                .setOxygenSaturation(oxygenSaturation)
+                .setRespiratoryRate(respiratoryRate)
+                .setSymptoms(symptoms)
+                .setNurseNotes(nurseNotes)
                 .setRecordedBy(recordedBy)
                 .setRecordedAt(recordedAt)
                 .build();

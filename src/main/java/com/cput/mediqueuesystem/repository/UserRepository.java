@@ -1,5 +1,7 @@
 package com.cput.mediqueuesystem.repository;
 
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import com.cput.mediqueuesystem.domain.User;
@@ -14,5 +16,7 @@ import com.cput.mediqueuesystem.domain.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
-// Inherits CRUD operations (create, read, update, delete) from JpaRepository
+    // Inherits CRUD operations (create, read, update, delete) from JpaRepository
+
+    Optional<User> findByEmail(String email);
 }

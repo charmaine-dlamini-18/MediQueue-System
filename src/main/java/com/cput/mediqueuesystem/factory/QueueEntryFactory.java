@@ -24,7 +24,9 @@ public class QueueEntryFactory {
                                                Staff doctor, Visit visit, int queueNumber,
                                                String priorityLevel, String status, LocalTime checkInTime) {
 
-        if (GenericValidator.isBlankOrNull(queueEntryId) || queue == null || patient == null || doctor == null) {
+        // A doctor is optional: patients get a queue number when they book,
+        // before admin/reception assigns a doctor to the appointment.
+        if (GenericValidator.isBlankOrNull(queueEntryId) || queue == null || patient == null) {
             return null;
         }
 

@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const form = document.getElementById("addClinicPageForm");
 
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
 
     event.preventDefault();
 
@@ -26,8 +26,32 @@ document.addEventListener("DOMContentLoaded", () => {
         .value
         .trim();
 
+    const clinicId =
+      `CL${String(data.clinics.length + 1).padStart(3, "0")}`;
+
+    /*
+      Create the clinic on the backend when it is reachable.
+    */
+    if (window.__mqConnected) {
+
+      const saved =
+        await createClinicAsync({
+          clinicId,
+          clinicName,
+          location: clinicLocation,
+          contactNumber: clinicContact
+        });
+
+      if (!saved.ok) {
+        alert(
+          "Could not save the clinic to the server – saved locally only."
+        );
+      }
+
+    }
+
     const newClinic = {
-      id: `CL${String(data.clinics.length + 1).padStart(3, "0")}`,
+      id: clinicId,
       name: clinicName,
       location: clinicLocation,
       contact: clinicContact,

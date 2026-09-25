@@ -9,6 +9,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const togglePassword =
     document.getElementById("togglePatientPassword");
 
+  const errorEl =
+    document.getElementById("patientLoginError");
+
+  const loginButton =
+    document.getElementById("patientLoginButton");
+
 
   togglePassword.addEventListener("click", () => {
 
@@ -21,9 +27,11 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 
-  loginForm.addEventListener("submit", (event) => {
+  loginForm.addEventListener("submit", async (event) => {
 
     event.preventDefault();
+
+    errorEl.textContent = "";
 
     const email =
       document
@@ -38,20 +46,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
     if (!email || !password) {
+      errorEl.textContent =
+        "Please enter your email and password.";
       return;
     }
 
 
     /*
-      Temporary frontend login.
-
-      Backend authentication will replace this later.
+      Authenticate against the backend. A session token is only saved
+      when the server actually validated the credentials — no fake
+      logins allowed.
     */
 
-    localStorage.setItem("mq_role", "PATIENT");
+    loginButton.disabled = true;
+    loginButton.textContent = "Logging in...";
 
-    window.location.href =
-      "patient-dashboard.html";
+    const res =
+      await loginAsync({ email, password });
+
+
+    if (!res.ok || !res.data || !res.data.token) {
+
+      errorEl.textContent =
+        authError(res);
+
+      loginButton.disabled = false;
+      loginButton.textContent = "Login";
+      return;
+
+    }
+
+
+    /*
+      Only a PATIENT role can use the patient portal. Anyone else is
+      redirected to their own dashboard.
+    */
+
+    const role = res.data.role;
+    saveSession(res.data);
+
+
+    if (role === "PATIENT") {
+      window.location.href =
+        "patient-dashboard.html";
+    } else {
+      window.location.href =
+        homeForRole(role);
+    }
 
   });
 

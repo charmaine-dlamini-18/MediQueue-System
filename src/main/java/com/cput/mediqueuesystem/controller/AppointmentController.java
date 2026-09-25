@@ -60,4 +60,30 @@ public class AppointmentController {
     public List<Appointment> getAll() {
         return appointmentService.getAll();
     }
+
+    // Appointments for a specific patient (used by the patient dashboard)
+    @GetMapping("/patient/{patientId}")
+    public List<Appointment> getByPatient(@PathVariable("patientId") String patientId) {
+        return appointmentService.getByPatient(patientId);
+    }
+
+    // Appointments assigned to a specific doctor (used by the doctor dashboard)
+    @GetMapping("/doctor/{doctorId}")
+    public List<Appointment> getByDoctor(@PathVariable("doctorId") String doctorId) {
+        return appointmentService.getByDoctor(doctorId);
+    }
+
+    // Assign a doctor to an appointment (admin/doctor/receptionist)
+    @PutMapping("/assign/{appointmentId}/{doctorId}")
+    public Appointment assignDoctor(@PathVariable("appointmentId") String appointmentId,
+                                    @PathVariable("doctorId") String doctorId) {
+        return appointmentService.assignDoctor(appointmentId, doctorId);
+    }
+
+    // Update the status of an appointment (admin/doctor/receptionist)
+    @PutMapping("/status/{appointmentId}/{status}")
+    public Appointment updateStatus(@PathVariable("appointmentId") String appointmentId,
+                                    @PathVariable("status") String status) {
+        return appointmentService.updateStatus(appointmentId, status);
+    }
 }

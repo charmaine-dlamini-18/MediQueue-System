@@ -23,4 +23,8 @@ public interface ISymptomsAnalysisService {
     void delete(String analysisId);
 
     List<SymptomsAnalysis> getAll();
+
+    SymptomsAnalysis analyze(String patientId, String inputText);
+
+    List<SymptomsAnalysis> getByPatient(String patientId);
 }

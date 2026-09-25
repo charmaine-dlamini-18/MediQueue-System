@@ -1,6 +1,7 @@
 package com.cput.mediqueuesystem.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -74,5 +75,21 @@ public class SymptomsAnalysisController {
     @GetMapping("/all")
     public ResponseEntity<List<SymptomsAnalysis>> getAll() {
         return new ResponseEntity<>(symptomsAnalysisService.getAll(), HttpStatus.OK);
+    }
+
+    @PostMapping("/analyze")
+    public ResponseEntity<SymptomsAnalysis> analyze(@RequestBody Map<String, String> request) {
+        String patientId = request.get("patientId");
+        String inputText = request.get("inputText");
+        SymptomsAnalysis created = symptomsAnalysisService.analyze(patientId, inputText);
+        if (created == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
+    @GetMapping("/patient/{patientId}")
+    public ResponseEntity<List<SymptomsAnalysis>> getByPatient(@PathVariable("patientId") String patientId) {
+        return new ResponseEntity<>(symptomsAnalysisService.getByPatient(patientId), HttpStatus.OK);
     }
 }

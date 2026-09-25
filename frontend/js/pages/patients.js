@@ -34,11 +34,20 @@ function openEditPatient(id) {
   openModal("editPatientModal");
 }
 
-function deletePatient(id) {
+async function deletePatient(id) {
   const data = getData();
   const p = data.patients.find(x => x.id === id);
   if (!p) return;
   if (!confirm(`Remove ${p.name} from patients? This can't be undone.`)) return;
+  if (window.__mqConnected) {
+    const r = await deletePatientAsync(id);
+    if (!r.ok) {
+      alert("Could not delete the patient from the server.");
+      return;
+    }
+    renderPatients();
+    return;
+  }
   data.patients = data.patients.filter(x => x.id !== id);
   setData(data);
   renderPatients();
@@ -48,19 +57,33 @@ document.addEventListener("DOMContentLoaded", () => {
   renderPatients();
   populateDeptDropdowns();
 
-  document.getElementById("addPatientForm").addEventListener("submit", (e) => {
+  document.getElementById("addPatientForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = getData();
     const name = document.getElementById("npName").value.trim();
     if (!name) return;
     const id = `P-0${240 + data.patients.length}`;
-    data.patients.unshift({
+    const entry = {
       id, name,
       gender: document.getElementById("npGender").value,
       age: Number(document.getElementById("npAge").value) || 0,
       phone: document.getElementById("npPhone").value,
       dept: document.getElementById("npDept").value,
-    });
+    };
+    if (window.__mqConnected) {
+      const res = await createPatientAsync({
+        patientId: id, name, gender: entry.gender, age: entry.age,
+        phone: entry.phone, dept: entry.dept,
+      });
+      if (res.ok) {
+        document.getElementById("addPatientForm").reset();
+        closeModal("addPatientModal");
+        renderPatients();
+        return;
+      }
+      alert("Could not save the patient to the server – saved locally only.");
+    }
+    data.patients.unshift(entry);
     setData(data);
     document.getElementById("addPatientForm").reset();
     closeModal("addPatientModal");

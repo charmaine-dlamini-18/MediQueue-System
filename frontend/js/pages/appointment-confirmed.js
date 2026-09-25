@@ -1,75 +1,21 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  const storedAppointment =
-    localStorage.getItem("mq_appointment");
-
-  const storedPatient =
-    localStorage.getItem("mq_patient");
+  const appointment =
+    JSON.parse(localStorage.getItem("mq_appointment") || "null");
 
 
   /*
-    Default values used if no saved data exists.
+    Guard against visiting this page without a real booking.
   */
 
-  let appointment = {
-    patientId: "Not provided",
-    clinic: "District Six Clinic",
-    department: "General Medicine",
-    date: "2026-05-13",
-    time: "10:00 AM",
-    reason: "General checkup",
-    bookingId: "APT-2026-0458",
-    queueNumber: "A-023"
-  };
-
-
-  let patient = {
-    fullName: "Charmaine Dlamini"
-  };
-
-
-  /*
-    Load saved appointment.
-  */
-
-  if (storedAppointment) {
-
-    try {
-
-      appointment =
-        JSON.parse(storedAppointment);
-
-    } catch (error) {
-
-      console.log(
-        "Could not load appointment information."
-      );
-
-    }
-
+  if (!appointment || !appointment.patientId) {
+    window.location.href = "patient-login.html";
+    return;
   }
 
 
-  /*
-    Load saved patient.
-  */
-
-  if (storedPatient) {
-
-    try {
-
-      patient =
-        JSON.parse(storedPatient);
-
-    } catch (error) {
-
-      console.log(
-        "Could not load patient information."
-      );
-
-    }
-
-  }
+  const patientName =
+    localStorage.getItem("mq_name") || "Patient";
 
 
   /*
@@ -78,7 +24,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let formattedDate =
     appointment.date;
-
 
   if (appointment.date) {
 
@@ -111,19 +56,19 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById(
     "confirmedBookingId"
   ).textContent =
-    appointment.bookingId;
+    appointment.appointmentId || "Pending";
 
 
   document.getElementById(
     "confirmedQueueNumber"
   ).textContent =
-    appointment.queueNumber;
+    appointment.queueNumber || "—";
 
 
   document.getElementById(
     "confirmedPatientName"
   ).textContent =
-    patient.fullName || "Patient";
+    patientName;
 
 
   document.getElementById(
@@ -190,12 +135,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
 
   /*
-    Delete appointment.
+    Delete appointment — removes it from the backend too, but only if
+    confirmation is given.
   */
 
   document.getElementById(
     "deleteAppointmentBtn"
-  ).addEventListener("click", () => {
+  ).addEventListener("click", async () => {
 
     const confirmed =
       window.confirm(
@@ -205,6 +151,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!confirmed) {
       return;
+    }
+
+
+    if (appointment.appointmentId) {
+
+      const deleteBtn =
+        document.getElementById("deleteAppointmentBtn");
+
+      deleteBtn.disabled = true;
+      deleteBtn.textContent = "Deleting...";
+
+      const res =
+        await deleteAppointmentAsync(appointment.appointmentId);
+
+
+      if (res.status === 401) {
+        clearSession();
+        window.location.href = "patient-login.html";
+        return;
+      }
+
     }
 
 

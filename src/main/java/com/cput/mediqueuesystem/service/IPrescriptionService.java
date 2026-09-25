@@ -15,4 +15,6 @@ import com.cput.mediqueuesystem.domain.Prescription;
 public interface IPrescriptionService extends IService<Prescription, String> {
 
     List<Prescription> getAll();
+
+    Prescription updateStatus(String prescriptionId, String status);
 }

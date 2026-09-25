@@ -54,11 +54,25 @@ function renderReceptionistDashboard() {
   document.getElementById("aqPatient").innerHTML = data.patients.map(p => `<option>${esc(p.name)}</option>`).join("");
 }
 
-function callNext() {
+async function callNext() {
+  const data0 = getData();
+  const waiting = data0.queue.filter(item => item.status === "Waiting" || item.status === "Ready for Doctor");
+  const current = data0.queue.find(item => item.status === "In Consultation");
+  const next = waiting[0];
+
+  if (window.__mqConnected) {
+    if (current && current.entryId) await setQueueEntryStatusAsync(current.entryId, "Waiting");
+    if (next && next.entryId) await setQueueEntryStatusAsync(next.entryId, "In Consultation");
+  }
+
   const data = getData();
   const withoutCurrent = data.queue.filter(item => item.status !== "In Consultation");
-  const idx = withoutCurrent.findIndex(item => item.status === "Waiting");
+  const idx = withoutCurrent.findIndex(item => item.status === "Waiting" || item.status === "Ready for Doctor");
   if (idx !== -1) withoutCurrent[idx] = { ...withoutCurrent[idx], status: "In Consultation" };
+  if (current && current.entryId) {
+    const ci = withoutCurrent.findIndex(item => item.entryId === current.entryId);
+    if (ci === -1) withoutCurrent.push({ ...current, status: "Waiting" });
+  }
   data.queue = withoutCurrent;
   setData(data);
   renderReceptionistDashboard();
@@ -68,31 +82,78 @@ document.addEventListener("DOMContentLoaded", () => {
   renderReceptionistDashboard();
   document.getElementById("callNextBtn").addEventListener("click", callNext);
 
-  document.getElementById("addPatientForm").addEventListener("submit", (e) => {
+  document.getElementById("addPatientForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = getData();
+    const name = document.getElementById("npName").value.trim();
+    if (!name) return;
     const id = `P-0${240 + data.patients.length}`;
-    data.patients.unshift({
-      id, name: document.getElementById("npName").value.trim(),
+    const entry = {
+      id, name,
       gender: document.getElementById("npGender").value,
       age: Number(document.getElementById("npAge").value) || 0,
       phone: document.getElementById("npPhone").value,
       dept: document.getElementById("npDept").value,
-    });
+    };
+    if (window.__mqConnected) {
+      const res = await createPatientAsync({
+        patientId: id, name, gender: entry.gender, age: entry.age,
+        phone: entry.phone, dept: entry.dept,
+      });
+      if (res.ok) {
+        document.getElementById("addPatientForm").reset();
+        closeModal("addPatientModal");
+        renderReceptionistDashboard();
+        return;
+      }
+      alert("Could not save the patient to the server – saved locally only.");
+    }
+    data.patients.unshift(entry);
     setData(data);
     document.getElementById("addPatientForm").reset();
     closeModal("addPatientModal");
     renderReceptionistDashboard();
   });
 
-  document.getElementById("bookApptForm").addEventListener("submit", (e) => {
+  document.getElementById("bookApptForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = getData();
+    const patientName = document.getElementById("naPatient").value.trim();
+    const doctorName = document.getElementById("naDoctor").value;
+    const dept = document.getElementById("naDept").value;
+    const time = document.getElementById("naTime").value;
+    const patient = data.patients.find(p => p.name === patientName);
+    const doctor = data.users.find(u => userMatchesLabel(u, doctorName));
+
+    if (window.__mqConnected) {
+      if (patient && doctor && doctor.id) {
+        const res = await createAppointmentAsync({
+          appointmentId: uniqueId("APP"),
+          patientId: patient.id,
+          doctorId: doctor.id,
+          scheduledDate: todayIso(),
+          scheduledTime: to24h(time),
+          appointmentType: "booked",
+          status: "Pending",
+        });
+        if (res.ok) {
+          document.getElementById("bookApptForm").reset();
+          document.getElementById("naDoctor").value = "Dr. N. Zulu";
+          closeModal("bookApptModal");
+          renderReceptionistDashboard();
+          return;
+        }
+        alert("Could not save the appointment to the server – saved locally only.");
+      } else {
+        alert("Could not find the selected patient or doctor on the server.");
+      }
+    }
+
     data.appointments.unshift({
-      patient: document.getElementById("naPatient").value.trim(),
+      patient: patientName,
       time: document.getElementById("naTime").value.trim(),
-      dept: document.getElementById("naDept").value,
-      doctor: document.getElementById("naDoctor").value,
+      dept,
+      doctor: doctorName,
       status: "Pending",
     });
     setData(data);
@@ -102,14 +163,32 @@ document.addEventListener("DOMContentLoaded", () => {
     renderReceptionistDashboard();
   });
 
-  document.getElementById("addQueueForm").addEventListener("submit", (e) => {
+  document.getElementById("addQueueForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = getData();
     const patientName = document.getElementById("aqPatient").value;
+    const dept = document.getElementById("aqDept").value;
     const patient = data.patients.find(p => p.name === patientName);
+
+    if (window.__mqConnected) {
+      const doctors = data.users.filter(u => u.department === dept && /doctor/i.test(u.role || ""));
+      const doctor = doctors[0] || data.users.find(u => /doctor/i.test(u.role || ""));
+      if (patient && doctor && doctor.id) {
+        const res = await createQueueEntryAsync({ patientId: patient.id, doctorId: doctor.id });
+        if (res.ok) {
+          closeModal("addQueueModal");
+          renderReceptionistDashboard();
+          return;
+        }
+        alert("Could not add the patient to the server queue – saved locally only.");
+      } else {
+        alert("Could not resolve the selected patient or a doctor for the queue.");
+      }
+    }
+
     const nextNo = `Q0${17 + data.queue.length}`;
     data.queue.push({
-      no: nextNo, patient: patientName, dept: document.getElementById("aqDept").value,
+      no: nextNo, patient: patientName, dept,
       status: "Waiting", wait: "0 min",
       id: patient ? patient.id : "P-0000", age: patient ? patient.age : 0,
       gender: patient ? patient.gender : "-", phone: patient ? patient.phone : "-",

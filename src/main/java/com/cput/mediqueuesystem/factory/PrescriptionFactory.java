@@ -37,6 +37,7 @@ public class PrescriptionFactory {
                 .setDosage(dosage)
                 .setInstructions(instructions)
                 .setPrescriptionDate(prescriptionDate)
+                .setStatus("Pending")
                 .build();
     }
 }

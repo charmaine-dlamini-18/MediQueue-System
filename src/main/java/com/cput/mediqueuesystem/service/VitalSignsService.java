@@ -35,6 +35,8 @@ public class VitalSignsService implements IVitalSignsService {
         VitalSigns validated = VitalSignsFactory.createVitalSigns(
                 vitalSigns.getVitalId(), vitalSigns.getVisit(), vitalSigns.getTemperature(),
                 vitalSigns.getBloodPressure(), vitalSigns.getHeartRate(), vitalSigns.getWeight(),
+                vitalSigns.getOxygenSaturation(), vitalSigns.getRespiratoryRate(),
+                vitalSigns.getSymptoms(), vitalSigns.getNurseNotes(),
                 vitalSigns.getRecordedBy(), vitalSigns.getRecordedAt());
         if (validated == null) {
             return null;

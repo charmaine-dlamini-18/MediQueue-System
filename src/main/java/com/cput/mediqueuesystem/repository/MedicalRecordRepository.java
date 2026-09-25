@@ -1,5 +1,7 @@
 package com.cput.mediqueuesystem.repository;
 
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -15,4 +17,6 @@ import com.cput.mediqueuesystem.domain.MedicalRecord;
 
 @Repository
 public interface MedicalRecordRepository extends JpaRepository<MedicalRecord, String> {
+
+    List<MedicalRecord> findByPatientUserId(String patientId);
 }

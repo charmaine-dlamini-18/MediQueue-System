@@ -15,4 +15,12 @@ import com.cput.mediqueuesystem.domain.Appointment;
 public interface IAppointmentService extends IService<Appointment, String> {
 
     List<Appointment> getAll();
+
+    List<Appointment> getByPatient(String patientId);
+
+    List<Appointment> getByDoctor(String doctorId);
+
+    Appointment assignDoctor(String appointmentId, String doctorId);
+
+    Appointment updateStatus(String appointmentId, String status);
 }

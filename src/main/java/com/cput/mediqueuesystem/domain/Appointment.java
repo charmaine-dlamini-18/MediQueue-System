@@ -40,10 +40,26 @@ public class Appointment {
     @JoinColumn(name = "patient_id", nullable = false)
     private Patient patient;
 
-    // The doctor this appointment is with
+    // The doctor this appointment is with.
+    // Nullable because a patient books without a doctor; staff assign
+    // a doctor later (see AppointmentService.assignDoctor).
     @ManyToOne
-    @JoinColumn(name = "doctor_id", nullable = false)
+    @JoinColumn(name = "doctor_id", nullable = true)
     private Staff doctor;
+
+    // Clinic the appointment takes place at
+    @ManyToOne
+    @JoinColumn(name = "clinic_id", nullable = true)
+    private Clinic clinic;
+
+    // Department the appointment falls under
+    @ManyToOne
+    @JoinColumn(name = "department_id", nullable = true)
+    private Department department;
+
+    // Reason for the visit / symptoms the patient described
+    @Column(name = "reason")
+    private String reason;
 
     // Date the appointment is scheduled for
     @Column(name = "scheduled_date", nullable = false)
@@ -75,6 +91,9 @@ public class Appointment {
         this.appointmentId = builder.appointmentId;
         this.patient = builder.patient;
         this.doctor = builder.doctor;
+        this.clinic = builder.clinic;
+        this.department = builder.department;
+        this.reason = builder.reason;
         this.scheduledDate = builder.scheduledDate;
         this.scheduledTime = builder.scheduledTime;
         this.appointmentType = builder.appointmentType;
@@ -94,6 +113,18 @@ public class Appointment {
 
     public Staff getDoctor() {
         return doctor;
+    }
+
+    public Clinic getClinic() {
+        return clinic;
+    }
+
+    public Department getDepartment() {
+        return department;
+    }
+
+    public String getReason() {
+        return reason;
     }
 
     public LocalDate getScheduledDate() {
@@ -116,6 +147,28 @@ public class Appointment {
         return createdBy;
     }
 
+    // Setters used by the service layer (doctor assignment, status update)
+
+    public void setDoctor(Staff doctor) {
+        this.doctor = doctor;
+    }
+
+    public void setClinic(Clinic clinic) {
+        this.clinic = clinic;
+    }
+
+    public void setDepartment(Department department) {
+        this.department = department;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     // Returns the Appointment object as a String
     @Override
     public String toString() {
@@ -123,6 +176,9 @@ public class Appointment {
                 "appointmentId='" + appointmentId + '\'' +
                 ", patient=" + (patient != null ? patient.getUserId() : null) +
                 ", doctor=" + (doctor != null ? doctor.getUserId() : null) +
+                ", clinic=" + (clinic != null ? clinic.getClinicId() : null) +
+                ", department=" + (department != null ? department.getDepartmentId() : null) +
+                ", reason='" + reason + '\'' +
                 ", scheduledDate=" + scheduledDate +
                 ", scheduledTime=" + scheduledTime +
                 ", appointmentType='" + appointmentType + '\'' +
@@ -139,6 +195,9 @@ public class Appointment {
         private String appointmentId;
         private Patient patient;
         private Staff doctor;
+        private Clinic clinic;
+        private Department department;
+        private String reason;
         private LocalDate scheduledDate;
         private LocalTime scheduledTime;
         private String appointmentType;
@@ -157,6 +216,21 @@ public class Appointment {
 
         public Builder setDoctor(Staff doctor) {
             this.doctor = doctor;
+            return this;
+        }
+
+        public Builder setClinic(Clinic clinic) {
+            this.clinic = clinic;
+            return this;
+        }
+
+        public Builder setDepartment(Department department) {
+            this.department = department;
+            return this;
+        }
+
+        public Builder setReason(String reason) {
+            this.reason = reason;
             return this;
         }
 
@@ -189,6 +263,9 @@ public class Appointment {
             this.appointmentId = appointment.appointmentId;
             this.patient = appointment.patient;
             this.doctor = appointment.doctor;
+            this.clinic = appointment.clinic;
+            this.department = appointment.department;
+            this.reason = appointment.reason;
             this.scheduledDate = appointment.scheduledDate;
             this.scheduledTime = appointment.scheduledTime;
             this.appointmentType = appointment.appointmentType;

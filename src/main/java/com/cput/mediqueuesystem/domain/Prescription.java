@@ -48,6 +48,10 @@ public class Prescription {
     @Column(name = "prescription_date", nullable = false)
     private LocalDate prescriptionDate;
 
+    // Dispensing status, e.g. "Pending", "Dispensed", "Cancelled"
+    @Column(name = "status", nullable = false)
+    private String status;
+
     // Default constructor required by JPA
     protected Prescription() {
     }
@@ -60,6 +64,7 @@ public class Prescription {
         this.dosage = builder.dosage;
         this.instructions = builder.instructions;
         this.prescriptionDate = builder.prescriptionDate;
+        this.status = builder.status;
     }
 
     // Getters
@@ -88,6 +93,14 @@ public class Prescription {
         return prescriptionDate;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     // Returns the Prescription object as a String
     @Override
     public String toString() {
@@ -98,6 +111,7 @@ public class Prescription {
                 ", dosage='" + dosage + '\'' +
                 ", instructions='" + instructions + '\'' +
                 ", prescriptionDate=" + prescriptionDate +
+                ", status='" + status + '\'' +
                 '}';
     }
 
@@ -112,6 +126,7 @@ public class Prescription {
         private String dosage;
         private String instructions;
         private LocalDate prescriptionDate;
+        private String status;
 
         public Builder setPrescriptionId(String prescriptionId) {
             this.prescriptionId = prescriptionId;
@@ -143,6 +158,11 @@ public class Prescription {
             return this;
         }
 
+        public Builder setStatus(String status) {
+            this.status = status;
+            return this;
+        }
+
         public Builder copy(Prescription prescription) {
             this.prescriptionId = prescription.prescriptionId;
             this.medicalRecord = prescription.medicalRecord;
@@ -150,6 +170,7 @@ public class Prescription {
             this.dosage = prescription.dosage;
             this.instructions = prescription.instructions;
             this.prescriptionDate = prescription.prescriptionDate;
+            this.status = prescription.status;
             return this;
         }
 
